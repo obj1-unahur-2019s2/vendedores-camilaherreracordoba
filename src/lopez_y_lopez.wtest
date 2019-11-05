@@ -1,0 +1,65 @@
+import vendedores.*
+import centros.*
+import clientes.*
+
+describe "tests de la actividad" {
+	var entreRios = new Provincia(poblacion= 3000000)
+	var buenosAires = new Provincia(poblacion= 4000000)
+	var santaFe = new Provincia(poblacion= 4000000)
+	var cordoba = new Provincia( poblacion = 4000000)
+	
+	var chivilcoy = new Ciudad(provincia = buenosAires)
+	var rosario = new Ciudad(provincia = santaFe)
+	var diamante = new Ciudad(provincia = entreRios)
+	var sanFrancisco = new Ciudad(provincia = cordoba)
+	var villaCarlosPaz = new Ciudad(provincia = cordoba)
+	
+	var vendedor1 = new VendedorFijo(ciudad = rosario)
+	var vendedor2 = new VendedorViajante(provincias = #{entreRios, buenosAires})
+	var corresponsal = new ComercioCorresponsal(lugarDeSucursales = #{chivilcoy, rosario, diamante})
+	
+	var centro1 = new CentroDeDistribucion(ciudad = [sanFrancisco, villaCarlosPaz])
+		
+	fixture {
+		vendedor1.agregarCertificacion(new Certificacion(puntos = 5))
+		vendedor1.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 10))
+		vendedor1.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 10))
+		
+		vendedor2.agregarCertificacion(new Certificacion(puntos = 10))
+		vendedor2.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 5))
+		vendedor2.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 15))
+		
+		corresponsal.agregarCertificacion(new Certificacion(puntos = 5))
+		corresponsal.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 10))
+		corresponsal.agregarCertificacion(new Certificacion(esDeProductos = true, puntos = 10))
+		
+		centro1.agregarVendedor(vendedor2)
+	}
+	test "vendedores" {
+		assert.that(vendedor1.esVersatil())
+		assert.notThat(vendedor1.esFirme())
+		assert.equals(vendedor1.puntosCertificaciones(), 25)
+		assert.notThat(vendedor1.esInfluyente())
+		
+		assert.that(vendedor2.esVersatil())
+		assert.that(vendedor2.esFirme())
+		assert.equals(vendedor2.puntosCertificaciones(), 30)
+		assert.notThat(vendedor2.esInfluyente())
+
+		assert.that(corresponsal.esVersatil())
+		assert.notThat(corresponsal.esFirme())
+		assert.equals(corresponsal.puntosCertificaciones(), 25)
+		assert.that(corresponsal.esInfluyente())		
+	}
+	
+	test "centros de distribucion" {
+		assert.notThat(centro1.tieneAlVendedor(vendedor1))
+		assert.that(centro1.puedeCubrirCiudad(chivilcoy))
+		assert.equals(centro1.vendedorEstrella(), vendedor2)
+		assert.equals(centro1.vendedoresGenericos(), #{vendedor2, corresponsal})
+		assert.notThat(centro1.esRobusto())
+		centro1.repartirCertificacion(new Certificacion(esDeProductos = true, puntos = 50))
+		assert.notThat(centro1.esRobusto())
+		centro1.esCandidato(vendedor1)
+	}
+}
